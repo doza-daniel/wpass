@@ -1,0 +1,29 @@
+#!/bin/bash
+
+function get {
+    echo -n "$1" | socat UNIX:/tmp/cache.sock STDIO
+}
+
+function put {
+    echo -n "$1 $2" | socat UNIX:/tmp/cache.sock STDIO
+}
+
+function askpass {
+    dmenupass "password for $DB_PATH" | tr -d '\n'
+}
+
+
+DB_PATH="$HOME/private.kdbx"
+
+PASS=$(get $DB_PATH)
+
+if [ -z "$PASS" ]; then
+    PASS=$(askpass)
+    put $DB_PATH $PASS
+fi
+
+ENTRY=$(echo $PASS | keepassxc-cli ls $DB_PATH 2>/dev/null | dmenu -l 10)
+
+echo $PASS | keepassxc-cli clip $DB_PATH $ENTRY 30 2>/dev/null
+
+
